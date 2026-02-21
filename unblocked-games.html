@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VOID_ARCADE // UNBLOCKED</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+  :root {
+    --green: #00ff41;
+    --dark-green: #008f11;
+    --dim-green: #003b00;
+    --bg: #000300;
+    --surface: #020d02;
+    --border: #00ff4133;
+    --red: #ff003c;
+    --cyan: #00ffe7;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--green);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  /* Matrix rain canvas */
+  #matrix-bg {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    opacity: 0.07;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Scanlines */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.15) 2px,
+      rgba(0,0,0,0.15) 4px
+    );
+    pointer-events: none;
+    z-index: 9998;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 16px 0;
+    position: sticky;
+    top: 0;
+    background: rgba(0,3,0,0.95);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.6rem;
+    font-weight: 900;
+    letter-spacing: 4px;
+    color: var(--green);
+    text-shadow: 0 0 20px var(--green), 0 0 40px var(--dark-green);
+    animation: flicker 8s infinite;
+  }
+
+  .logo span { color: var(--red); text-shadow: 0 0 20px var(--red); }
+
+  @keyframes flicker {
+    0%,96%,98%,100% { opacity: 1; }
+    97% { opacity: 0.4; }
+    99% { opacity: 0.8; }
+  }
+
+  .status-bar {
+    display: flex;
+    gap: 20px;
+    font-size: 0.7rem;
+    color: var(--dark-green);
+  }
+
+  .status-bar .blink { animation: blink 1.2s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .status-dot { color: var(--green); }
+
+  /* ─── HERO ─── */
+  .hero {
+    padding: 50px 0 30px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .terminal-box {
+    border: 1px solid var(--green);
+    padding: 20px 24px;
+    background: rgba(0,255,65,0.03);
+    box-shadow: 0 0 30px rgba(0,255,65,0.08), inset 0 0 30px rgba(0,0,0,0.5);
+    position: relative;
+    max-width: 700px;
+  }
+
+  .terminal-box::before {
+    content: '● ● ●';
+    position: absolute;
+    top: 8px; left: 14px;
+    font-size: 0.6rem;
+    color: var(--dim-green);
+    letter-spacing: 4px;
+  }
+
+  .terminal-box .prompt {
+    font-size: 0.85rem;
+    color: var(--dark-green);
+    margin-top: 10px;
+  }
+
+  .terminal-box .cmd {
+    font-size: 1.1rem;
+    color: var(--green);
+    text-shadow: 0 0 10px var(--green);
+  }
+
+  .terminal-box .output {
+    margin-top: 8px;
+    font-size: 0.78rem;
+    color: var(--cyan);
+    line-height: 1.7;
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 9px; height: 15px;
+    background: var(--green);
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
+    margin-left: 2px;
+  }
+
+  /* ─── SEARCH ─── */
+  .search-bar {
+    display: flex;
+    gap: 10px;
+    margin: 30px 0 10px;
+  }
+
+  .search-bar input {
+    flex: 1;
+    background: rgba(0,255,65,0.05);
+    border: 1px solid var(--border);
+    color: var(--green);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.9rem;
+    padding: 10px 16px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .search-bar input:focus {
+    border-color: var(--green);
+    box-shadow: 0 0 15px rgba(0,255,65,0.2);
+  }
+
+  .search-bar input::placeholder { color: var(--dim-green); }
+
+  .btn {
+    background: transparent;
+    border: 1px solid var(--green);
+    color: var(--green);
+    font-family: 'Orbitron', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .btn:hover {
+    background: var(--green);
+    color: var(--bg);
+    box-shadow: 0 0 20px rgba(0,255,65,0.4);
+  }
+
+  /* ─── CATEGORIES ─── */
+  .categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .cat-tag {
+    font-size: 0.7rem;
+    padding: 5px 14px;
+    border: 1px solid var(--border);
+    color: var(--dark-green);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .cat-tag:hover, .cat-tag.active {
+    border-color: var(--green);
+    color: var(--green);
+    box-shadow: 0 0 10px rgba(0,255,65,0.2);
+    background: rgba(0,255,65,0.05);
+  }
+
+  /* ─── GAME GRID ─── */
+  .section-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 4px;
+    color: var(--dark-green);
+    padding: 24px 0 16px;
+    text-transform: uppercase;
+  }
+
+  .section-title span { color: var(--green); }
+
+  .game-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+    padding-bottom: 40px;
+  }
+
+  .game-card {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    group: true;
+  }
+
+  .game-card:hover {
+    border-color: var(--green);
+    box-shadow: 0 0 20px rgba(0,255,65,0.15), 0 0 40px rgba(0,255,65,0.05);
+    transform: translateY(-2px);
+  }
+
+  .game-card:hover .card-overlay { opacity: 1; }
+
+  .card-thumb {
+    width: 100%;
+    height: 120px;
+    background: linear-gradient(135deg, #000 0%, var(--dim-green) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-thumb::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      rgba(0,255,65,0.03) 10px,
+      rgba(0,255,65,0.03) 20px
+    );
+  }
+
+  .card-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,255,65,0.12);
+    opacity: 0;
+    transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card-overlay span {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 3px;
+    color: var(--green);
+    text-shadow: 0 0 10px var(--green);
+    border: 1px solid var(--green);
+    padding: 6px 14px;
+  }
+
+  .card-info {
+    padding: 10px 12px;
+  }
+
+  .card-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 1px;
+    color: var(--green);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+  }
+
+  .card-meta {
+    font-size: 0.6rem;
+    color: var(--dim-green);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .card-meta .rating { color: #ffd700; font-size: 0.55rem; }
+
+  /* ─── FULLSCREEN MODAL ─── */
+  #game-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: var(--bg);
+    flex-direction: column;
+  }
+
+  #game-modal.open { display: flex; }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,3,0,0.98);
+    flex-shrink: 0;
+  }
+
+  .modal-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 3px;
+    color: var(--green);
+    text-shadow: 0 0 10px var(--green);
+  }
+
+  .modal-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .modal-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--dark-green);
+    font-family: 'Orbitron', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .modal-btn:hover {
+    border-color: var(--green);
+    color: var(--green);
+    box-shadow: 0 0 10px rgba(0,255,65,0.2);
+  }
+
+  .modal-btn.close-btn:hover {
+    border-color: var(--red);
+    color: var(--red);
+    box-shadow: 0 0 10px rgba(255,0,60,0.3);
+  }
+
+  #game-iframe {
+    flex: 1;
+    width: 100%;
+    border: none;
+    background: #000;
+  }
+
+  /* ─── TICKER ─── */
+  .ticker {
+    font-size: 0.65rem;
+    color: var(--dim-green);
+    padding: 6px 0;
+    border-top: 1px solid var(--border);
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .ticker-inner {
+    display: inline-block;
+    animation: scroll-left 30s linear infinite;
+  }
+
+  @keyframes scroll-left {
+    from { transform: translateX(100vw); }
+    to { transform: translateX(-100%); }
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 20px 0;
+    font-size: 0.65rem;
+    color: var(--dim-green);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  footer span { color: var(--green); }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--dim-green); border-radius: 0; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--green); }
+
+  .hidden { display: none !important; }
+
+  /* glitch effect on hover */
+  .game-card:hover .card-title {
+    animation: glitch 0.3s linear;
+  }
+
+  @keyframes glitch {
+    0% { transform: translate(0); }
+    20% { transform: translate(-2px, 1px); filter: hue-rotate(90deg); }
+    40% { transform: translate(2px, -1px); }
+    60% { transform: translate(-1px, 2px); filter: hue-rotate(0); }
+    80% { transform: translate(1px, -2px); }
+    100% { transform: translate(0); }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="matrix-bg"></canvas>
+
+<header>
+  <div class="container">
+    <div class="header-inner">
+      <div class="logo">VOID<span>_</span>ARCADE</div>
+      <div class="status-bar">
+        <span><span class="status-dot blink">●</span> SYSTEM ONLINE</span>
+        <span>PROXY: <span style="color:var(--green)">ACTIVE</span></span>
+        <span>FIREWALL: <span style="color:var(--red)">BYPASSED</span></span>
+        <span id="clock"></span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <section class="hero">
+    <div class="terminal-box">
+      <div class="prompt">root@void_arcade:~$</div>
+      <div class="cmd">./launch_arcade.sh --unblocked --fullscreen<span class="cursor"></span></div>
+      <div class="output">
+        [✓] Proxy tunnel established...<br>
+        [✓] Loading 50+ unblocked games...<br>
+        [✓] Firewall bypass active...<br>
+        [✓] All systems nominal. Have fun.
+      </div>
+    </div>
+
+    <div class="search-bar" style="margin-top:24px;">
+      <input type="text" id="search-input" placeholder="> search_game --query &quot;...&quot;" />
+      <button class="btn" onclick="filterGames()">EXEC</button>
+    </div>
+  </section>
+
+  <div class="categories">
+    <span class="cat-tag active" onclick="filterCat(this,'all')">// ALL</span>
+    <span class="cat-tag" onclick="filterCat(this,'action')">ACTION</span>
+    <span class="cat-tag" onclick="filterCat(this,'puzzle')">PUZZLE</span>
+    <span class="cat-tag" onclick="filterCat(this,'racing')">RACING</span>
+    <span class="cat-tag" onclick="filterCat(this,'strategy')">STRATEGY</span>
+    <span class="cat-tag" onclick="filterCat(this,'sport')">SPORTS</span>
+    <span class="cat-tag" onclick="filterCat(this,'shooter')">SHOOTER</span>
+    <span class="cat-tag" onclick="filterCat(this,'adventure')">ADVENTURE</span>
+    <span class="cat-tag" onclick="filterCat(this,'classic')">CLASSIC</span>
+  </div>
+
+  <div class="section-title">// <span>FEATURED GAMES</span> — SELECT TO LAUNCH</div>
+
+  <div class="game-grid" id="game-grid"></div>
+
+</div>
+
+<div class="ticker">
+  <span class="ticker-inner">
+    &nbsp;&nbsp;&nbsp;★ VOID_ARCADE — ALL GAMES UNBLOCKED ★ &nbsp;&nbsp; [ FULLSCREEN MODE AVAILABLE ] &nbsp;&nbsp; ★ NO ADS. NO TRACKING. JUST GAMES. ★ &nbsp;&nbsp; [ 50+ TITLES LOADED ] &nbsp;&nbsp; ★ UPDATED DAILY ★ &nbsp;&nbsp;&nbsp;
+  </span>
+</div>
+
+<div class="container">
+  <footer>
+    <span style="color:var(--dim-green)">VOID_ARCADE v2.0.77 // ALL RIGHTS VOID</span>
+    <span>[ UNBLOCKED • UNLIMITED • UNRESTRICTED ]</span>
+  </footer>
+</div>
+
+<!-- GAME MODAL -->
+<div id="game-modal">
+  <div class="modal-header">
+    <div class="modal-title" id="modal-game-title">// LOADING GAME...</div>
+    <div class="modal-controls">
+      <button class="modal-btn" onclick="enterFullscreen()">⛶ FULLSCREEN</button>
+      <button class="modal-btn close-btn" onclick="closeModal()">✕ EXIT</button>
+    </div>
+  </div>
+  <iframe id="game-iframe" id="game-iframe" allowfullscreen></iframe>
+</div>
+
+<script>
+// ─── MATRIX RAIN ───
+const canvas = document.getElementById('matrix-bg');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+const cols = Math.floor(canvas.width / 20);
+const drops = Array(cols).fill(1);
+
+function drawMatrix() {
+  ctx.fillStyle = 'rgba(0,3,0,0.05)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#00ff41';
+  ctx.font = '15px Share Tech Mono';
+  drops.forEach((y, i) => {
+    const char = String.fromCharCode(0x30A0 + Math.random() * 96);
+    ctx.fillText(char, i * 20, y * 20);
+    if (y * 20 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+    drops[i]++;
+  });
+}
+setInterval(drawMatrix, 50);
+
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+
+// ─── CLOCK ───
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toTimeString().slice(0,8);
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ─── GAMES DATA ───
+const GAMES = [
+  // Action
+  { title: 'Shell Shockers', emoji: '🥚', cat: 'shooter', rating: '★★★★★', url: 'https://shellshock.io', desc: 'Multiplayer' },
+  { title: 'Krunker.io', emoji: '🔫', cat: 'shooter', rating: '★★★★★', url: 'https://krunker.io', desc: 'FPS Arena' },
+  { title: 'Venge.io', emoji: '⚔️', cat: 'shooter', rating: '★★★★☆', url: 'https://venge.io', desc: '3D FPS' },
+  { title: 'Moomoo.io', emoji: '🪓', cat: 'action', rating: '★★★★☆', url: 'https://moomoo.io', desc: 'Survival' },
+  { title: 'Surviv.io', emoji: '🎮', cat: 'action', rating: '★★★★☆', url: 'https://surviv.io', desc: 'Battle Royale' },
+  { title: 'Diep.io', emoji: '💥', cat: 'action', rating: '★★★★☆', url: 'https://diep.io', desc: 'Tank Battle' },
+  { title: 'Agar.io', emoji: '🔵', cat: 'action', rating: '★★★★★', url: 'https://agar.io', desc: 'Cell Eating' },
+  { title: 'Slither.io', emoji: '🐍', cat: 'action', rating: '★★★★☆', url: 'https://slither.io', desc: 'Snake MMO' },
+  { title: 'Paper.io 2', emoji: '📄', cat: 'action', rating: '★★★★☆', url: 'https://paper-io.com', desc: 'Territory' },
+  // Racing
+  { title: 'Madalin Cars', emoji: '🏎️', cat: 'racing', rating: '★★★★☆', url: 'https://madalingames.com/game/madalin-stunt-cars-2/', desc: 'Stunt Cars' },
+  { title: 'Road Fury', emoji: '🚗', cat: 'racing', rating: '★★★☆☆', url: 'https://www.crazygames.com/game/road-fury', desc: 'Road Rage' },
+  { title: 'Drift Boss', emoji: '🏁', cat: 'racing', rating: '★★★★☆', url: 'https://driftboss.io', desc: 'Drifting' },
+  // Puzzle
+  { title: '2048', emoji: '🔢', cat: 'puzzle', rating: '★★★★★', url: 'https://play2048.co', desc: 'Number Game' },
+  { title: 'Wordle', emoji: '📝', cat: 'puzzle', rating: '★★★★★', url: 'https://www.nytimes.com/games/wordle', desc: 'Word Game' },
+  { title: 'Sudoku', emoji: '🔲', cat: 'puzzle', rating: '★★★★☆', url: 'https://sudoku.com', desc: 'Classic Puzzle' },
+  { title: 'Connections', emoji: '🔗', cat: 'puzzle', rating: '★★★★☆', url: 'https://www.nytimes.com/games/connections', desc: 'Word Groups' },
+  { title: 'Chess.com', emoji: '♟️', cat: 'strategy', rating: '★★★★★', url: 'https://chess.com', desc: 'Chess Online' },
+  // Strategy
+  { title: 'Bloons TD', emoji: '🎈', cat: 'strategy', rating: '★★★★★', url: 'https://www.addictinggames.com/strategy/bloons-tower-defense', desc: 'Tower Defense' },
+  { title: 'Little Alchemy', emoji: '⚗️', cat: 'strategy', rating: '★★★★☆', url: 'https://littlealchemy2.com', desc: 'Crafting' },
+  { title: 'Ninja.io', emoji: '🥷', cat: 'action', rating: '★★★★☆', url: 'https://ninja.io', desc: 'Platform Battle' },
+  // Sports
+  { title: 'Basketball Stars', emoji: '🏀', cat: 'sport', rating: '★★★★☆', url: 'https://www.crazygames.com/game/basketball-stars', desc: '1v1 Hoops' },
+  { title: 'Head Soccer', emoji: '⚽', cat: 'sport', rating: '★★★★☆', url: 'https://www.crazygames.com/game/head-soccer', desc: 'Soccer' },
+  { title: 'Golf Bros', emoji: '⛳', cat: 'sport', rating: '★★★☆☆', url: 'https://www.crazygames.com/game/golf-bros', desc: 'Mini Golf' },
+  // Classic
+  { title: 'Pac-Man', emoji: '👾', cat: 'classic', rating: '★★★★★', url: 'https://www.google.com/logos/2010/pacman10-i.html', desc: 'Arcade Classic' },
+  { title: 'Tetris', emoji: '🟥', cat: 'classic', rating: '★★★★★', url: 'https://jstris.jezevec10.com', desc: 'Block Classic' },
+  { title: 'Snake Game', emoji: '🐍', cat: 'classic', rating: '★★★★☆', url: 'https://playsnake.org', desc: 'Classic Snake' },
+  { title: 'Space Invaders', emoji: '👽', cat: 'classic', rating: '★★★★☆', url: 'https://www.classicgamesarcade.com/game/21669/space-invaders.html', desc: 'Arcade Classic' },
+  // Adventure
+  { title: 'Fireboy & Watergirl', emoji: '🔥', cat: 'adventure', rating: '★★★★★', url: 'https://www.coolmathgames.com/0-fireboy-and-watergirl-in-the-forest-temple', desc: 'Co-op Puzzle' },
+  { title: 'Run 3', emoji: '🏃', cat: 'adventure', rating: '★★★★★', url: 'https://www.coolmathgames.com/0-run-3', desc: 'Endless Run' },
+  { title: 'OvO', emoji: '🏄', cat: 'adventure', rating: '★★★★☆', url: 'https://www.coolmathgames.com/0-ovo', desc: 'Parkour' },
+  { title: 'Tomb of the Mask', emoji: '🏛️', cat: 'adventure', rating: '★★★★☆', url: 'https://www.crazygames.com/game/tomb-of-the-mask', desc: 'Arcade Adventure' },
+  { title: 'Among Us', emoji: '🚀', cat: 'adventure', rating: '★★★★★', url: 'https://www.crazygames.com/game/among-us-online-edition', desc: 'Social Deduction' },
+  { title: 'Slope', emoji: '⛷️', cat: 'action', rating: '★★★★★', url: 'https://slope.io', desc: 'Ball Runner' },
+  // More action
+  { title: 'Zombs Royale', emoji: '🧟', cat: 'action', rating: '★★★★☆', url: 'https://zombsroyale.io', desc: 'Battle Royale' },
+  { title: 'Hole.io', emoji: '🕳️', cat: 'action', rating: '★★★★☆', url: 'https://hole-io.com', desc: 'Eat the City' },
+  { title: 'Wings.io', emoji: '✈️', cat: 'action', rating: '★★★☆☆', url: 'https://wings.io', desc: 'Aerial Combat' },
+  { title: 'Lordz.io', emoji: '⚔️', cat: 'strategy', rating: '★★★☆☆', url: 'https://lordz.io', desc: 'Medieval MMO' },
+  { title: 'Minecraft Classic', emoji: '⛏️', cat: 'adventure', rating: '★★★★★', url: 'https://classic.minecraft.net', desc: 'Sandbox Builder' },
+  { title: 'Cookie Clicker', emoji: '🍪', cat: 'classic', rating: '★★★★☆', url: 'https://orteil.dashnet.org/cookieclicker/', desc: 'Idle Clicker' },
+];
+
+let currentCat = 'all';
+
+function renderGames(games) {
+  const grid = document.getElementById('game-grid');
+  grid.innerHTML = '';
+  games.forEach(g => {
+    const card = document.createElement('div');
+    card.className = 'game-card';
+    card.dataset.cat = g.cat;
+    card.innerHTML = `
+      <div class="card-thumb">
+        <span>${g.emoji}</span>
+        <div class="card-overlay"><span>▶ LAUNCH</span></div>
+      </div>
+      <div class="card-info">
+        <div class="card-title">${g.title.toUpperCase()}</div>
+        <div class="card-meta">
+          <span>${g.desc}</span>
+          <span class="rating">${g.rating}</span>
+        </div>
+      </div>`;
+    card.addEventListener('click', () => openGame(g.title, g.url));
+    grid.appendChild(card);
+  });
+}
+
+renderGames(GAMES);
+
+function filterCat(el, cat) {
+  document.querySelectorAll('.cat-tag').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentCat = cat;
+  applyFilters();
+}
+
+function filterGames() {
+  applyFilters();
+}
+
+function applyFilters() {
+  const query = document.getElementById('search-input').value.toLowerCase();
+  const filtered = GAMES.filter(g => {
+    const matchCat = currentCat === 'all' || g.cat === currentCat;
+    const matchSearch = !query || g.title.toLowerCase().includes(query) || g.desc.toLowerCase().includes(query);
+    return matchCat && matchSearch;
+  });
+  renderGames(filtered);
+}
+
+document.getElementById('search-input').addEventListener('input', applyFilters);
+document.getElementById('search-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') applyFilters();
+});
+
+// ─── MODAL ───
+function openGame(title, url) {
+  document.getElementById('modal-game-title').textContent = `// PLAYING: ${title.toUpperCase()}`;
+  document.getElementById('game-iframe').src = url;
+  document.getElementById('game-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('game-modal').classList.remove('open');
+  document.getElementById('game-iframe').src = '';
+  document.body.style.overflow = '';
+}
+
+function enterFullscreen() {
+  const iframe = document.getElementById('game-iframe');
+  if (iframe.requestFullscreen) iframe.requestFullscreen();
+  else if (iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen();
+  else if (iframe.mozRequestFullScreen) iframe.mozRequestFullScreen();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+</script>
+</body>
+</html>
